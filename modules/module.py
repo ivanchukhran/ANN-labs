@@ -16,6 +16,12 @@ class Module(abc.ABC):
     def parameters(self):
         raise NotImplementedError("Parameters getter is not implemented. You should implement it in subclass.")
 
+    def has_parameters(self):
+        return self.parameters() is not None
+
+    def grad_parameters(self):
+        raise NotImplementedError("Gradients getter is not implemented. You should implement it in subclass.")
+
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
 
