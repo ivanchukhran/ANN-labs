@@ -29,7 +29,7 @@ class Dataset:
 
     __x_data: pd.DataFrame
     __y_data: pd.DataFrame
-    __labeled: bool
+    __labeled: bool = False
 
     def __init__(self,
                  root_dir: str,
@@ -120,6 +120,7 @@ class Dataset:
 
     def y_untransform(self, y: np.ndarray) -> np.ndarray:
         """Untransforms y data using y scaler."""
+        y = self.__y_transform.inverse_transform(y)
         if self.__labeled:
             y = self.__label_encoder.inverse_transform(y)
-        return self.__y_transform.inverse_transform(y)
+        return y
