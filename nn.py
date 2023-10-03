@@ -11,7 +11,6 @@ class NeuralNetwork(Module):
 
     def from_config(self, config: dict):
         layers = config['neural_network']['layers']
-        self.modules = list()
         for layer in layers:
             name, params = layer['name'], layer['params']
             maybe_layer = None
@@ -23,6 +22,7 @@ class NeuralNetwork(Module):
                 self.modules.append(maybe_layer(**params))
 
     def __init__(self, config: dict):
+        self.modules = list()
         self.from_config(config)
         self.train = True
 
