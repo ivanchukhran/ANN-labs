@@ -47,16 +47,6 @@ class Dataset:
         self.x_labels = x_labels
         self.leave_last = leave_last
 
-        self.__x_data = self.data[self.x_labels]
-        self.__y_data = self.data[self.y_labels]
-
-        self.__label_encoder = LabelEncoder()
-
-        # Check if __y_data is categorical string data
-        if self.__y_data.dtypes[0] == "object" or self.__y_data.dtypes[0] == "string":
-            self.__labeled = True
-            self.__y_data = self.__label_encoder.fit_transform(self.__y_data)
-
         if not os.path.isfile(self.root_dir):
             raise FileNotFoundError("Dataset file not found.")
 
@@ -69,6 +59,16 @@ class Dataset:
                 self.data = pd.read_excel(self.root_dir)
             case _:
                 raise NotImplementedError("Dataset file format not supported.")
+
+        self.__x_data = self.data[self.x_labels]
+        self.__y_data = self.data[self.y_labels]
+
+        self.__label_encoder = LabelEncoder()
+
+        # Check if __y_data is categorical string data
+        if self.__y_data.dtypes[0] == "object" or self.__y_data.dtypes[0] == "string":
+            self.__labeled = True
+            self.__y_data = self.__label_encoder.fit_transform(self.__y_data)
 
         match scaler:
             case "StandardScaler":
