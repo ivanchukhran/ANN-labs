@@ -4,7 +4,6 @@ import pandas as pd
 import os
 from pathlib import Path
 import numpy as np
-from sklearn.base import TransformerMixin
 
 
 class Dataset:
@@ -17,6 +16,7 @@ class Dataset:
         batch_size (int): Size of batch.
         x_labels (List[str]): List of labels for x values.
         y_labels (List[str]): List of labels for y values.
+        leave_last (bool): If True, leaves last batch if it is smaller than batch_size.
     """
     root_dir: str
     train: bool
@@ -24,6 +24,7 @@ class Dataset:
     data: pd.DataFrame
     x_labels: List[str]
     y_labels: List[str]
+    leave_last: bool
 
     __x_data: pd.DataFrame
     __y_data: pd.DataFrame
@@ -34,6 +35,7 @@ class Dataset:
                  y_labels: List[str],
                  train: bool = True,
                  batch_size: int = 1,
+                 leave_last: bool = False,
                  scaler: str = "StandardScaler"):
 
         self.root_dir = root_dir
@@ -41,6 +43,7 @@ class Dataset:
         self.batch_size = batch_size
         self.y_labels = y_labels
         self.x_labels = x_labels
+        self.leave_last = leave_last
 
         self.__x_data = self.data[self.x_labels]
         self.__y_data = self.data[self.y_labels]
@@ -78,12 +81,23 @@ class Dataset:
 
     def __len__(self):
         """Returns length of dataset."""
-        return len(self.data) - self.batch_size
+        if self.leave_last:
+            return len(self.__x_data) // self.batch_size + 1
+        else:
+            return len(self.__x_data) // self.batch_size
 
     def __getitem__(self, idx: int) -> (np.ndarray, np.ndarray):
         """Returns sample from dataset in format (x, y) where x is numpy.ndarray, and y is scalar or ndarray too."""
-        x = self.__x_data.iloc[idx:idx + self.batch_size]
-        y = self.__y_data.iloc[idx:idx + self.batch_size]
+        if idx >= len(self) or idx < 0:
+            raise IndexError("Index out of range.")
+
+        if idx == len(self) - 1 and not self.leave_last:
+            x = self.__x_data.iloc[idx * self.batch_size:].values
+            y = self.__y_data.iloc[idx * self.batch_size:].values
+        else:
+            x = self.__x_data.iloc[idx * self.batch_size:(idx + 1) * self.batch_size].values
+            y = self.__y_data.iloc[idx * self.batch_size:(idx + 1) * self.batch_size].values
+
         return x, y
 
     def __transform_x_y(self) -> None:
