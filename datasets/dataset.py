@@ -60,15 +60,15 @@ class Dataset:
             case _:
                 raise NotImplementedError("Dataset file format not supported.")
 
-        self.__x_data = self.data[self.x_labels]
-        self.__y_data = self.data[self.y_labels]
+        self.__x_data = pd.DataFrame(self.data[self.x_labels])
+        self.__y_data = pd.DataFrame(self.data[self.y_labels])
 
         self.__label_encoder = LabelEncoder()
 
         # Check if __y_data is categorical string data
         if self.__y_data.dtypes[0] == "object" or self.__y_data.dtypes[0] == "string":
             self.__labeled = True
-            self.__y_data = self.__label_encoder.fit_transform(self.__y_data)
+            self.__y_data = pd.DataFrame(self.__label_encoder.fit_transform(self.__y_data))
 
         match scaler:
             case "StandardScaler":
@@ -111,8 +111,8 @@ class Dataset:
 
     def __transform_x_y(self) -> None:
         """Transforms x and y data using any of Scalers."""
-        self.__x_data = self.__x_transform.fit_transform(self.__x_data)
-        self.__y_data = self.__y_transform.fit_transform(self.__y_data)
+        self.__x_data = pd.DataFrame(self.__x_transform.fit_transform(self.__x_data))
+        self.__y_data = pd.DataFrame(self.__y_transform.fit_transform(self.__y_data))
 
     def x_untransform(self, x: np.ndarray) -> np.ndarray:
         """Untransforms x data using x scaler."""
@@ -122,5 +122,6 @@ class Dataset:
         """Untransforms y data using y scaler."""
         y = self.__y_transform.inverse_transform(y)
         if self.__labeled:
+            y = y.astype(int)
             y = self.__label_encoder.inverse_transform(y)
         return y
