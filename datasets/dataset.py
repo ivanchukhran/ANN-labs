@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from pathlib import Path
 import numpy as np
+from sklearn.preprocessing import LabelEncoder
 
 
 class Dataset:
@@ -28,6 +29,7 @@ class Dataset:
 
     __x_data: pd.DataFrame
     __y_data: pd.DataFrame
+    __labeled: bool
 
     def __init__(self,
                  root_dir: str,
@@ -47,6 +49,13 @@ class Dataset:
 
         self.__x_data = self.data[self.x_labels]
         self.__y_data = self.data[self.y_labels]
+
+        self.__label_encoder = LabelEncoder()
+
+        # Check if __y_data is categorical string data
+        if self.__y_data.dtypes[0] == "object" or self.__y_data.dtypes[0] == "string":
+            self.__labeled = True
+            self.__y_data = self.__label_encoder.fit_transform(self.__y_data)
 
         if not os.path.isfile(self.root_dir):
             raise FileNotFoundError("Dataset file not found.")
@@ -111,4 +120,6 @@ class Dataset:
 
     def y_untransform(self, y: np.ndarray) -> np.ndarray:
         """Untransforms y data using y scaler."""
+        if self.__labeled:
+            y = self.__label_encoder.inverse_transform(y)
         return self.__y_transform.inverse_transform(y)
