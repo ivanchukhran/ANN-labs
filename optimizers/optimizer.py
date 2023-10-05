@@ -15,6 +15,6 @@ class Optimizer:
     def zero_grad(self):
         for module in self.model.modules:
             if module.has_parameters():
-                for grad in module.grad_parameters():
+                for grad in module.grads():
                     grad *= 0
 

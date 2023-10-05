@@ -19,6 +19,6 @@ class Adagrad(Optimizer):
         self.t += 1
         for i, module in enumerate(self.model.modules):
             if module.has_parameters():
-                for j, (param, grad) in enumerate(zip(module.parameters(), module.grad_parameters())):
+                for j, (param, grad) in enumerate(zip(module.parameters(), module.grads())):
                     self.v[i][j] += grad ** 2
                     param -= self.lr * grad / (np.sqrt(self.v[i][j]) + self.eps)

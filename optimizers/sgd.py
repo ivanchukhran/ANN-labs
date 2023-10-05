@@ -8,5 +8,5 @@ class SGD(Optimizer):
     def step(self):
         for module in self.model.modules:
             if module.has_parameters():
-                for param, grad in zip(module.parameters(), module.grad_parameters()):
+                for param, grad in zip(module.parameters(), module.grads()):
                     param -= self.lr * grad

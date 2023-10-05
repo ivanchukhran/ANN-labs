@@ -24,7 +24,7 @@ class Adam(Optimizer):
         self.t += 1
         for i, module in enumerate(self.model.modules):
             if module.has_parameters():
-                for j, (param, grad) in enumerate(zip(module.parameters(), module.grad_parameters())):
+                for j, (param, grad) in enumerate(zip(module.parameters(), module.grads())):
                     self.m[i][j] = self.beta1 * self.m[i][j] + (1 - self.beta1) * grad
                     self.v[i][j] = self.beta2 * self.v[i][j] + (1 - self.beta2) * grad ** 2
                     m_hat = self.m[i][j] / (1 - self.beta1 ** self.t)
