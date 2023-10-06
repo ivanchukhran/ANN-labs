@@ -43,3 +43,21 @@ class NeuralNetwork(Module):
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
+
+    def to_dict(self):
+        return {self.__class__.__name__: list(map(lambda x: x.to_dict(), self.modules))}
+
+    def from_dict(self, config: dict):
+        if self.__class__.__name__ not in config.keys():
+            raise KeyError(f"Module {self.__class__.__name__} not found in config. "
+                           f"The expected module is {self.__class__.__name__} but got {config.keys()} instead.")
+
+        for module, config_value in zip(self.modules, config[self.__class__.__name__]):
+            module.from_dict(config_value)
+
+    def save_state(self, path: str):
+        np.save(path, self.to_dict(), allow_pickle=True)
+
+    def load_state(self, path: str):
+        file = np.load(path, allow_pickle=True).item()
+        self.from_dict(file)
