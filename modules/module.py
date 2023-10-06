@@ -47,5 +47,5 @@ class Module(abc.ABC):
             self._parameters = config[self.__class__.__name__]
         except KeyError:
             raise KeyError(f"Module {self.__class__.__name__} not found in config. "
-                           f"The expected module is {self.__class__.__name__} but got {config.keys()[0]} instead.")
+                           f"The expected module is {self.__class__.__name__} but got {config.keys()} instead.")
 
