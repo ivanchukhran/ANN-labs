@@ -38,7 +38,8 @@ class Dataset:
                  train: bool = True,
                  batch_size: int = 1,
                  leave_last: bool = False,
-                 scaler: str = "StandardScaler"):
+                 scaler: str = "StandardScaler",
+                 *args, **kwargs):
 
         self.root_dir = root_dir
         self.train = train
