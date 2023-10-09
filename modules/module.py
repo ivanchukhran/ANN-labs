@@ -1,7 +1,5 @@
 import abc
 
-from torch.nn import Module, Linear, Parameter
-
 
 class Module(abc.ABC):
     _parameters: list
