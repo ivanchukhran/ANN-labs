@@ -12,7 +12,7 @@ class NeuralNetwork(Module):
     def from_config(self, config: dict):
         layers = config['neural_network']['layers']
         for layer in layers:
-            name, params = layer['name'], layer['params']
+            name, params = layer['type'], layer['params']
             maybe_layer = None
             try:
                 maybe_layer = globals().get(name)

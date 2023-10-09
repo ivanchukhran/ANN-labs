@@ -1,19 +1,31 @@
 import numpy as np
 
+from optimizers import SGD, Adam, RMSProp, Adagrad
 from utils import fetch_json
-from modules import *
 from nn import NeuralNetwork
 
 
 def main():
-    config = fetch_json('fully_connected.json')
+    config = fetch_json('fc.json')
     nn = NeuralNetwork(config)
-    print(nn)
-    x = np.random.randn(1, 784)
-    output = nn(x)
-    print(output)
-    back = nn.backward(output)
-    print(back)
+    print("saving state")
+    nn.save_state("fc.npy")
+    print("done")
+    print("loading state")
+    nn.load_state("fc.npy")
+    print("done")
+
+    # print(nn.to_dict())
+    # optim = RMSProp(nn, lr=0.001)
+    # print(nn)
+    # print(f"parameters: {nn.modules[0].parameters()[0][:10]}")
+    # x = np.random.randn(1, 784)
+    # output = nn(x)
+    # print(output)
+    # back = nn.backward(output)
+    # optim.step()
+    # print(f"parameters: {nn.modules[0].parameters()[0][:10]}")
+    # print(back)
 
 
 if __name__ == '__main__':
