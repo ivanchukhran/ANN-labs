@@ -2,21 +2,21 @@
   "neural_network": {
     "layers": [
       {
-        "name": "Linear",
+        "type": "Linear",
         "params": {
           "in_features": 784,
           "out_features": 100
         }
       },
       {
-        "name": "Linear",
+        "type": "Linear",
         "params": {
           "in_features": 100,
           "out_features": 10
         }
       },
       {
-        "name": "Linear",
+        "type": "Linear",
         "params": {
           "in_features": 10,
           "out_features": 1
