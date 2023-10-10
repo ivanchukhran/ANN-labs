@@ -1,3 +1,4 @@
+import os
 from os.path import join
 import matplotlib.pyplot as plt
 
@@ -21,20 +22,21 @@ def main(config: dict) -> None:
     logger = setup_logger("train_logger", "train.log")
     weights_dir = config["training"]["weights_dir"]
 
+    if not os.path.exists(weights_dir):
+        os.makedirs(weights_dir)
+
     x_labels = ['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm']
     y_labels = ['Species']
 
     ds_config = config["dataset"]
 
-    dataset = Dataset(root_dir=ds_config["root_dir"], x_labels=x_labels, y_labels=y_labels,
-                      scaler=ds_config["scaler"], batch_size=ds_config["batch_size"],
-                      leave_last=ds_config["leave_last"])
+    dataset = Dataset(x_labels=x_labels, y_labels=y_labels, **ds_config)
     dataloader = DataLoader(dataset, shuffle=ds_config["shuffle"])
 
     nn_config = config["neural_network"]
     nn = NeuralNetwork(nn_config)
 
-    loss_fn = getattr(losses, nn_config["loss_fn"])()
+    loss_fn = getattr(losses, config["loss_fn"])()
     optimizer_config = config["optimizer"]
     optimizer = getattr(optimizers, config["optimizer"]["type"])(nn, **optimizer_config["params"])
 
@@ -112,8 +114,9 @@ if __name__ == '__main__':
                 "lr": 0.001
             }
         },
+        "loss_fn": "CrossEntropy",
         "dataset": {
-            "root_dir": "data/iris/Iris.csv",
+            "root_dir": "../data/iris/Iris.csv",
             "scaler": "MinMaxScaler",
             "batch_size": 32,
             "leave_last": True,
