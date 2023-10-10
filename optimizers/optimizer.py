@@ -18,3 +18,8 @@ class Optimizer:
                 for grad in module.grads():
                     grad *= 0
 
+    def save_state(self):
+        raise NotImplementedError("You should implement this method in subclass.")
+
+    def load_state(self):
+        raise NotImplementedError("You should implement this method in subclass.")
