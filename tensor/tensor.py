@@ -1,4 +1,5 @@
 import numpy as np
+from functions import Function
 
 _convertable = (int, float, list)
 
