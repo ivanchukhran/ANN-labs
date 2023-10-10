@@ -1,4 +1,4 @@
-from .tensor import Tensor
+from tensor.tensor import Tensor
 
 
 class Function:
@@ -13,7 +13,7 @@ class Function:
 
     def __init__(self, saved_tensors: Tensor | list[Tensor] = None):
         self.saved_tensors = saved_tensors
-        self.next_functions = None
+        self.next_functions = [t.grad_fn for t in saved_tensors if saved_tensors is not None]
 
     def forward(self, *args):
         raise NotImplementedError("Forward not implemented. "
