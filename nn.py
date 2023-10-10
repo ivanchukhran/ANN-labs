@@ -10,7 +10,7 @@ class NeuralNetwork(Module):
     train: bool
 
     def from_config(self, config: dict):
-        layers = config['neural_network']['layers']
+        layers = config['layers']
         for layer in layers:
             name, params = layer['type'], layer['params']
             maybe_layer = None
