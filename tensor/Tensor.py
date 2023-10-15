@@ -20,10 +20,10 @@ class Tensor:
     grad: np.ndarray
     grad_fn: Any
 
-    def __init__(self, data: np.ndarray | int | float | list, requires_grad: bool = False, grad_fn: 'Function' = None):
+    def __init__(self, data: np.ndarray | int | float | list, requires_grad: bool = False, grad_fn: Any = None):
         if isinstance(data, _convertable):
             data = np.array(data)
-        if not isinstance(data, np.ndarray):
+        if 'numpy' not in str(type(data)):
             raise TypeError(f"Can't convert {type(data)} to numpy.ndarray")
         self.data = data
         self.requires_grad = requires_grad
@@ -34,7 +34,7 @@ class Tensor:
         if self.grad_fn is None or not self.requires_grad:
             raise RuntimeError("Can't call backward on Tensor that does not require grad")
         if grad_output is None:
-            grad_output = 1
+            grad_output = np.ones_like(self.data)
         self.grad_fn.backward(grad_output)
 
     def __repr__(self):
@@ -42,8 +42,7 @@ class Tensor:
 
     def __add__(self, other):
         other = to_tensor(other)
-        f = Add((self, other))
-        return f()
+        return Add((self, other))()
 
     def __radd__(self, other):
         other = to_tensor(other)
@@ -51,7 +50,7 @@ class Tensor:
 
     def __sub__(self, other):
         other = to_tensor(other)
-        return Tensor(self.data - other.data, requires_grad=(self.requires_grad or other.requires_grad))
+        return self.__add__(other.__neg__())
 
     def __rsub__(self, other):
         other = to_tensor(other)
@@ -59,7 +58,7 @@ class Tensor:
 
     def __mul__(self, other):
         other = to_tensor(other)
-        return Tensor(self.data * other.data, requires_grad=(self.requires_grad or other.requires_grad))
+        return Mul((self, other))()
 
     def __rmul__(self, other):
         other = to_tensor(other)
@@ -70,7 +69,7 @@ class Tensor:
 
     def __matmul__(self, other):
         other = to_tensor(other)
-        return Tensor(self.data @ other.data, requires_grad=(self.requires_grad or other.requires_grad))
+        return MatMul((self, other))()
 
     def __rmatmul__(self, other):
         other = to_tensor(other)
@@ -79,7 +78,7 @@ class Tensor:
     T = property(lambda self: self.transpose())
 
     def transpose(self):
-        return Tensor(self.data.T, self.requires_grad)
+        return Tensor(self.data.T, self.requires_grad, self.grad_fn)
 
 
 class Function:
@@ -109,14 +108,16 @@ class Function:
 
 
 class Add(Function):
+
     def __init__(self, saved_tensors: tuple):
         super().__init__(saved_tensors)
 
     def forward(self):
-        return reduce(
-            lambda x, y: Tensor(x.data + y.data, requires_grad=(x.requires_grad or y.requires_grad), grad_fn=self),
-            self.saved_tensors
-        )
+        x, y = self.saved_tensors
+        t = Tensor(x.data + y.data)
+        t.requires_grad = x.requires_grad or y.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
 
     def backward(self, grad_output: Any = None):
         # print(f"grad_fn: {self}")
@@ -131,7 +132,7 @@ class Add(Function):
 
     def __repr__(self):
         tensor_string = ', '.join([str(t) for t in self.saved_tensors])
-        return f"<Add ({tensor_string})>"
+        return f"<Add>"
 
 
 class MatMul(Function):
@@ -139,16 +140,18 @@ class MatMul(Function):
         super().__init__(saved_tensors)
 
     def forward(self):
-        return reduce(lambda x, y: x @ y, self.saved_tensors)
+        x, y = self.saved_tensors
+        t = Tensor(x.data @ y.data)
+        t.requires_grad = x.requires_grad or y.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
 
     def backward(self, grad_output: Any = None):
-        first, last = self.saved_tensors
-        first.grad += grad_output @ last.T
-        last.grad += grad_output @ first.T
-        for t in self.saved_tensors:
-            if t.requires_grad:
-                t.grad_fn.backward(grad_output) if t.grad_fn is not None else None
-
+        for i in range(len(self.saved_tensors)):
+            a, b = self.saved_tensors[i], self.saved_tensors[i - 1]
+            if a.requires_grad:
+                a.grad += np.dot(grad_output, b.data.T)
+                a.grad_fn.backward(grad_output) if a.grad_fn is not None else None
 
     def __call__(self, *args, **kwargs):
         return self.forward()
@@ -159,30 +162,19 @@ class Mul(Function):
         super().__init__(saved_tensors)
 
     def forward(self):
-        return reduce(lambda x, y: x * y, self.saved_tensors)
+        x, y = self.saved_tensors
+        t = Tensor(x.data * y.data)
+        t.requires_grad = x.requires_grad or y.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
 
     def backward(self, grad_output: Any = None):
-        # TODO: fix this
-        for t in self.saved_tensors:
-            if t.requires_grad:
-                t.grad += grad_output.grad
-
-    def __call__(self, *args, **kwargs):
-        return self.forward()
-
-
-class Sub(Function):
-    def __init__(self, saved_tensors):
-        super().__init__(saved_tensors)
-
-    def forward(self):
-        return reduce(lambda x, y: x - y, self.saved_tensors)
-
-    def backward(self, grad_output: Any = None):
-        # TODO: fix this
-        for t in self.saved_tensors:
-            if t.requires_grad:
-                t.grad += grad_output.grad
+        print(f"backward init grad: {grad_output}")
+        for i in range(len(self.saved_tensors)):
+            a, b = self.saved_tensors[i], self.saved_tensors[i - 1]
+            if a.requires_grad:
+                a.grad += grad_output * b.data
+                a.grad_fn.backward(grad_output) if a.grad_fn is not None else None
 
     def __call__(self, *args, **kwargs):
         return self.forward()
