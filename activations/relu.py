@@ -1,5 +1,6 @@
 import numpy as np
 from .activation import Activation
+from tensor import relu
 
 
 class ReLU(Activation):
@@ -11,8 +12,5 @@ class ReLU(Activation):
     array([0, 0, 1])
         """
 
-    def forward(self, x: np.ndarray):
-        return np.maximum(0, x)
-
-    def backward(self, x: np.ndarray, grad_output: np.ndarray):
-        return grad_output * (x > 0)
+    def forward(self, x):
+        return relu(x)

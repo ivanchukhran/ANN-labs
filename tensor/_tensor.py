@@ -94,7 +94,7 @@ class Function:
 
     """
 
-    def __init__(self, saved_tensors: Tensor | tuple = None):
+    def __init__(self, saved_tensors: Any = None):
         self.saved_tensors = saved_tensors
         self.next_functions = [t.grad_fn for t in saved_tensors if saved_tensors is not None]
 
@@ -109,7 +109,7 @@ class Function:
 
 class Add(Function):
 
-    def __init__(self, saved_tensors: tuple):
+    def __init__(self, saved_tensors: Any):
         super().__init__(saved_tensors)
 
     def forward(self):
@@ -175,6 +175,90 @@ class Mul(Function):
             if a.requires_grad:
                 a.grad += grad_output * b.data
                 a.grad_fn.backward(grad_output) if a.grad_fn is not None else None
+
+    def __call__(self, *args, **kwargs):
+        return self.forward()
+
+
+class ReLU(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x = self.saved_tensors
+        t = Tensor(np.maximum(0, x.data))
+        t.requires_grad = x.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x = self.saved_tensors
+        if x.requires_grad:
+            x.grad += grad_output * (x.data > 0)
+            x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
+
+    def __call__(self, *args, **kwargs):
+        return self.forward()
+
+
+class Sigmoid(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x = self.saved_tensors
+        t = Tensor(1 / (1 + np.exp(-x.data)))
+        t.requires_grad = x.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x = self.saved_tensors
+        if x.requires_grad:
+            x.grad += grad_output * (x.data * (1 - x.data))
+            x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
+
+    def __call__(self, *args, **kwargs):
+        return self.forward()
+
+
+class Tanh(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x = self.saved_tensors
+        t = Tensor(np.tanh(x.data))
+        t.requires_grad = x.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x = self.saved_tensors
+        if x.requires_grad:
+            x.grad += grad_output * (1 - np.tanh(x.data) ** 2)
+            x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
+
+    def __call__(self, *args, **kwargs):
+        return self.forward()
+
+
+class Softmax(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x = self.saved_tensors
+        t = Tensor(np.exp(x.data) / np.sum(np.exp(x.data)))
+        t.requires_grad = x.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x = self.saved_tensors
+        if x.requires_grad:
+            x.grad += grad_output * (x.data * (1 - x.data))
+            x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
     def __call__(self, *args, **kwargs):
         return self.forward()
