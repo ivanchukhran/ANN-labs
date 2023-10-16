@@ -1,2 +1,2 @@
-from ._tensor import Tensor, ReLU as relu, Softmax as softmax, Sigmoid as sigmoid, Tanh as tanh
+from ._tensor import (Tensor, relu, softmax, sigmoid, tanh, cross_entropy, binary_cross_entropy, mse)
 from .parameter import Parameter

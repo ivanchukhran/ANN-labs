@@ -1,17 +1,18 @@
 import numpy as np
 
 from .loss import Loss
+from tensor import binary_cross_entropy, cross_entropy
 
 
 class BinaryCrossEntropy(Loss):
     """Computes binary cross entropy loss."""
-    @staticmethod
-    def __call__(y_true: np.ndarray, y_pred: np.ndarray):
-        return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+
+    def forward(self, y_true, y_pred):
+        return binary_cross_entropy(y_true, y_pred)
 
 
 class CrossEntropy(Loss):
     """Computes cross entropy loss."""
-    @staticmethod
-    def __call__(y_true: np.ndarray, y_pred: np.ndarray):
-        return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))
+
+    def forward(self, y_true, y_pred):
+        return cross_entropy(y_true, y_pred)

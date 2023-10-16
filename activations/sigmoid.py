@@ -11,6 +11,6 @@ class Sigmoid(Activation):
     >>> sigmoid(np.array([0, 1]))
     array([0.5       , 0.73105858])
     """
-    def forward(self, x: np.ndarray):
+    def forward(self, x):
         return sigmoid(x)
 

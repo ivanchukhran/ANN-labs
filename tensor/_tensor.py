@@ -94,17 +94,23 @@ class Function:
 
     """
 
-    def __init__(self, saved_tensors: Any = None):
+    def __init__(self, saved_tensors: Any):
         self.saved_tensors = saved_tensors
         self.next_functions = [t.grad_fn for t in saved_tensors if saved_tensors is not None]
 
-    def forward(self, *args):
+    def forward(self, *args, **kwargs):
         raise NotImplementedError("Forward not implemented. "
                                   "You should implement forward method in your Function subclass")
 
     def backward(self, *grad_output):
         raise NotImplementedError("Backward not implemented. "
                                   "You should implement backward method in your Function subclass")
+
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}>"
 
 
 class Add(Function):
@@ -130,10 +136,6 @@ class Add(Function):
     def __call__(self, *args, **kwargs):
         return self.forward()
 
-    def __repr__(self):
-        tensor_string = ', '.join([str(t) for t in self.saved_tensors])
-        return f"<Add>"
-
 
 class MatMul(Function):
     def __init__(self, saved_tensors: Any):
@@ -152,9 +154,6 @@ class MatMul(Function):
             if a.requires_grad:
                 a.grad += np.dot(grad_output, b.data.T)
                 a.grad_fn.backward(grad_output) if a.grad_fn is not None else None
-
-    def __call__(self, *args, **kwargs):
-        return self.forward()
 
 
 class Mul(Function):
@@ -176,9 +175,6 @@ class Mul(Function):
                 a.grad += grad_output * b.data
                 a.grad_fn.backward(grad_output) if a.grad_fn is not None else None
 
-    def __call__(self, *args, **kwargs):
-        return self.forward()
-
 
 class ReLU(Function):
     def __init__(self, saved_tensors: Any):
@@ -197,8 +193,9 @@ class ReLU(Function):
             x.grad += grad_output * (x.data > 0)
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
-    def __call__(self, *args, **kwargs):
-        return self.forward()
+
+def relu(x: Tensor):
+    return ReLU((x,))()
 
 
 class Sigmoid(Function):
@@ -218,8 +215,9 @@ class Sigmoid(Function):
             x.grad += grad_output * (x.data * (1 - x.data))
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
-    def __call__(self, *args, **kwargs):
-        return self.forward()
+
+def sigmoid(x: Tensor):
+    return Sigmoid((x,))()
 
 
 class Tanh(Function):
@@ -239,8 +237,9 @@ class Tanh(Function):
             x.grad += grad_output * (1 - np.tanh(x.data) ** 2)
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
-    def __call__(self, *args, **kwargs):
-        return self.forward()
+
+def tanh(x: Tensor):
+    return Tanh((x,))()
 
 
 class Softmax(Function):
@@ -260,5 +259,72 @@ class Softmax(Function):
             x.grad += grad_output * (x.data * (1 - x.data))
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
-    def __call__(self, *args, **kwargs):
-        return self.forward()
+
+def softmax(x: Tensor):
+    return Softmax((x,))()
+
+
+class CrossEntropy(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x, y = self.saved_tensors
+        t = Tensor(-np.log(x.data[y.data]))
+        t.requires_grad = x.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x, y = self.saved_tensors
+        if x.requires_grad:
+            x.grad += grad_output * (x.data - y.data)
+            x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
+
+
+def cross_entropy(x: Tensor, y: Tensor):
+    return CrossEntropy((x, y))()
+
+
+class BinaryCrossEntropy(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x, y = self.saved_tensors
+        t = Tensor(-np.log(x.data[y.data]) - np.log(1 - x.data[1 - y.data]))
+        t.requires_grad = x.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x, y = self.saved_tensors
+        if x.requires_grad:
+            x.grad += grad_output * (x.data - y.data)
+            x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
+
+
+def binary_cross_entropy(x: Tensor, y: Tensor):
+    return BinaryCrossEntropy((x, y))()
+
+
+class MSE(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x, y = self.saved_tensors
+        t = Tensor(np.mean((x.data - y.data) ** 2))
+        t.requires_grad = x.requires_grad
+        t.grad_fn = self if t.requires_grad else None
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x, y = self.saved_tensors
+        if x.requires_grad:
+            x.grad += grad_output * (2 * (x.data - y.data) / x.data.shape[0])
+            x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
+
+
+def mse(x: Tensor, y: Tensor):
+    return MSE((x, y))()
