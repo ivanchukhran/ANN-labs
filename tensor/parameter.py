@@ -9,6 +9,6 @@ class Parameter(Tensor):
         super().__init__(self.data, requires_grad=True)
 
     def __repr__(self):
-        return f"Parameter({self.data.shape})"
+        return f"Parameter({self.data})"
 
 
