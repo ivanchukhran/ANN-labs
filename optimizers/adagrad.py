@@ -9,16 +9,11 @@ class Adagrad(Optimizer):
         self.t = 0
 
         self.v = []
-        for i, module in enumerate(self.model.modules):
-            if module.has_parameters():
-                self.v.append([])
-                for param in module.parameters():
-                    self.v[i].append(np.zeros_like(param))
+        for param in self.model.parameters():
+            self.v.append(np.zeros_like(param.data))
 
     def step(self):
         self.t += 1
-        for i, module in enumerate(self.model.modules):
-            if module.has_parameters():
-                for j, (param, grad) in enumerate(zip(module.parameters(), module.grads())):
-                    self.v[i][j] += grad ** 2
-                    param -= self.lr * grad / (np.sqrt(self.v[i][j]) + self.eps)
+        for i, (param, grad) in enumerate(zip(self.model.parameters(), self.model.grads())):
+            self.v[i] += grad ** 2
+            param.data = param.data - self.lr * grad / (np.sqrt(self.v[i]) + self.eps)

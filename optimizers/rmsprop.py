@@ -8,15 +8,10 @@ class RMSProp(Optimizer):
         self.beta = beta
         self.eps = eps
         self.s = []
-        for i, module in enumerate(self.model.modules):
-            if module.has_parameters():
-                self.s.append([])
-                for param in module.parameters():
-                    self.s[i].append(np.zeros_like(param))
+        for param in self.model.parameters():
+            self.s.append(np.zeros_like(param.data))
 
     def step(self):
-        for i, module in enumerate(self.model.modules):
-            if module.has_parameters():
-                for j, (param, grad) in enumerate(zip(module.parameters(), module.grads())):
-                    self.s[i][j] = self.beta * self.s[i][j] + (1 - self.beta) * grad ** 2
-                    param -= self.lr * grad / (np.sqrt(self.s[i][j]) + self.eps)
+        for i, (param, grad) in enumerate(zip(self.model.parameters(), self.model.grads())):
+            self.s[i] = self.beta * self.s[i] + (1 - self.beta) * grad ** 2
+            param.data = param.data - self.lr * grad / (np.sqrt(self.s[i]) + self.eps)

@@ -1,3 +1,6 @@
+import numpy as np
+
+from modules import module
 from .optimizer import Optimizer
 
 
@@ -6,7 +9,5 @@ class SGD(Optimizer):
         super().__init__(model, lr)
 
     def step(self):
-        for module in self.model.modules:
-            if module.has_parameters():
-                for param, grad in zip(module.parameters(), module.grads()):
-                    param -= self.lr * grad
+        for param in self.model.parameters():
+            param.data = param.data - self.lr * param.grad
