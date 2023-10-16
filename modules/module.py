@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from typing import Iterator, Optional
 
+import numpy as np
+
 from tensor import Parameter
 
 
@@ -54,7 +56,7 @@ class Module:
     def has_parameters(self):
         return bool(self._parameters)
 
-    def grads(self) -> Iterator[Parameter]:
+    def grads(self) -> Iterator[np.ndarray]:
         for p in self._parameters.values():
             yield p.grad
 
