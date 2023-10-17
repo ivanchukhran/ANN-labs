@@ -21,6 +21,7 @@ def make_tensor_from_ops(*tensors, ops: Callable, backward_fn: Callable = None):
     t.grad = np.zeros_like(t.data) if t.requires_grad else None
     return t
 
+
 class Tensor:
     data: np.ndarray
     requires_grad: bool
@@ -43,7 +44,7 @@ class Tensor:
         if self.grad_fn is None or not self.requires_grad:
             raise RuntimeError("Can't call backward on Tensor that does not require grad")
         if grad_output is None:
-            grad_output = 1.
+            grad_output = np.ones_like(self.data)
         self.grad_fn.backward(grad_output)
 
     def __repr__(self):
@@ -51,7 +52,7 @@ class Tensor:
 
     def __add__(self, other):
         other = to_tensor(other)
-        return Add((self, other))()
+        return add_(self, other)
 
     def __radd__(self, other):
         other = to_tensor(other)
@@ -67,7 +68,7 @@ class Tensor:
 
     def __mul__(self, other):
         other = to_tensor(other)
-        return Mul((self, other))()
+        return mul_(self, other)
 
     def __rmul__(self, other):
         other = to_tensor(other)
@@ -78,7 +79,7 @@ class Tensor:
 
     def __matmul__(self, other):
         other = to_tensor(other)
-        return MatMul((self, other))()
+        return matmul_(self, other)
 
     def __rmatmul__(self, other):
         return other.__matmul__(self)
@@ -87,6 +88,9 @@ class Tensor:
 
     def transpose(self):
         return Tensor(self.data.T, self.requires_grad, self.grad_fn)
+
+    def sum(self):
+        return sum_(self)
 
 
 class Function:
@@ -142,6 +146,30 @@ class Add(Function):
         return self.forward()
 
 
+def add_(x: Tensor, y: Tensor):
+    return Add((x, y))()
+
+
+class Sum(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x = self.saved_tensors
+        t = make_tensor_from_ops(x, ops=lambda a: np.sum(a), backward_fn=self)
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x = self.saved_tensors
+        if x.requires_grad:
+            x.grad = x.grad + grad_output * np.ones_like(x.data)
+            x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
+
+
+def sum_(x: Tensor):
+    return Sum((x,))()
+
+
 class MatMul(Function):
     def __init__(self, saved_tensors: Any):
         super().__init__(saved_tensors)
@@ -156,8 +184,11 @@ class MatMul(Function):
             a, b = self.saved_tensors[i], self.saved_tensors[i - 1]
             if a.requires_grad:
                 a.grad = a.grad + np.dot(grad_output, b.data.T)
-                if a.grad_fn is not None:
-                    a.grad_fn.backward(a.grad)
+                a.grad_fn.backward(a.grad) if a.grad_fn is not None else None
+
+
+def matmul_(x: Tensor, y: Tensor):
+    return MatMul((x, y))()
 
 
 class Mul(Function):
@@ -177,6 +208,10 @@ class Mul(Function):
                 a.grad_fn.backward(grad_output) if a.grad_fn is not None else None
 
 
+def mul_(x: Tensor, y: Tensor):
+    return Mul((x, y))()
+
+
 class ReLU(Function):
     def __init__(self, saved_tensors: Any):
         super().__init__(saved_tensors)
@@ -193,7 +228,7 @@ class ReLU(Function):
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
 
-def relu(x: Tensor):
+def relu_(x: Tensor):
     return ReLU((x,))()
 
 
@@ -213,7 +248,7 @@ class Sigmoid(Function):
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
 
-def sigmoid(x: Tensor):
+def sigmoid_(x: Tensor):
     return Sigmoid((x,))()
 
 
@@ -233,7 +268,7 @@ class Tanh(Function):
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
 
-def tanh(x: Tensor):
+def tanh_(x: Tensor):
     return Tanh((x,))()
 
 
@@ -253,7 +288,7 @@ class Softmax(Function):
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
 
-def softmax(x: Tensor):
+def softmax_(x: Tensor):
     return Softmax((x,))()
 
 
@@ -273,7 +308,7 @@ class CrossEntropy(Function):
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
 
-def cross_entropy(x: Tensor, y: Tensor):
+def cross_entropy_(x: Tensor, y: Tensor):
     return CrossEntropy((x, y))()
 
 
@@ -293,7 +328,7 @@ class BinaryCrossEntropy(Function):
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
 
-def binary_cross_entropy(x: Tensor, y: Tensor):
+def binary_cross_entropy_(x: Tensor, y: Tensor):
     return BinaryCrossEntropy((x, y))()
 
 
@@ -313,5 +348,5 @@ class MSE(Function):
             x.grad_fn.backward(grad_output) if x.grad_fn is not None else None
 
 
-def mse(x: Tensor, y: Tensor):
+def mse_(x: Tensor, y: Tensor):
     return MSE((x, y))()

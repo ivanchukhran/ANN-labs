@@ -1,5 +1,5 @@
 from activations import Activation
-from tensor import softmax
+from tensor import softmax_
 
 
 class Softmax(Activation):
@@ -12,4 +12,4 @@ class Softmax(Activation):
     """
 
     def forward(self, x):
-        return softmax(x)
+        return softmax_(x)

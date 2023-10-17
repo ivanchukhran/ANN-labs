@@ -1,6 +1,6 @@
 import numpy as np
 from .activation import Activation
-from tensor import relu
+from tensor import relu_
 
 
 class ReLU(Activation):
@@ -13,4 +13,4 @@ class ReLU(Activation):
         """
 
     def forward(self, x):
-        return relu(x)
+        return relu_(x)

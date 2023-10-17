@@ -1,6 +1,6 @@
 import numpy as np
 from .activation import Activation
-from tensor import sigmoid
+from tensor import sigmoid_
 
 
 class Sigmoid(Activation):
@@ -12,5 +12,5 @@ class Sigmoid(Activation):
     array([0.5       , 0.73105858])
     """
     def forward(self, x):
-        return sigmoid(x)
+        return sigmoid_(x)
 
