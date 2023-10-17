@@ -93,6 +93,26 @@ class Tensor:
     def sum(self):
         return sum_(self)
 
+    def get_state(self) -> dict:
+        return {
+            self.__class__.__name__: {
+                'data': self.data,
+                'requires_grad': self.requires_grad,
+                'grad': self.grad,
+                'grad_fn': self.grad_fn
+            }
+        }
+
+    def set_state(self, state: dict):
+        if self.__class__.__name__ not in state.keys():
+            raise KeyError(f"Tensor {self.__class__.__name__} not found in config. "
+                           f"The expected tensor is {self.__class__.__name__} but got {state.keys()} instead.")
+        state_values = state[self.__class__.__name__]
+        self.data = state_values['data']
+        self.requires_grad = state_values['requires_grad']
+        self.grad = state_values['grad']
+        self.grad_fn = state_values['grad_fn']
+
 
 class Function:
     """
