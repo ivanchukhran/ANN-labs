@@ -5,10 +5,46 @@ import os
 from pathlib import Path
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
+import torchvision.datasets as datasets
 
 
 class Dataset:
-    """Base class for all datasets.
+    """Base Interface for all datasets."""
+
+    def __len__(self):
+        """Returns length of dataset."""
+        raise NotImplementedError
+
+    def __getitem__(self, idx: int) -> (np.ndarray, np.ndarray):
+        """Returns sample from dataset in format (x, y) where x is numpy.ndarray, and y is scalar or ndarray too."""
+        raise NotImplementedError
+
+
+class Dataset_imgs(Dataset):
+    """Class for images of numbers dataset."""
+
+    def __init__(self, name: str = "MNIST"):
+        match name:
+            case "MNIST":
+                self.data = datasets.MNIST(root="datasets", train=True, download=True)
+            case "CIFAR10":
+                self.data = datasets.CIFAR10(root="datasets", train=True, download=True)
+            case "CIFAR100":
+                self.data = datasets.CIFAR100(root="datasets", train=True, download=True)
+            case _:
+                raise NotImplementedError("Dataset not supported.")
+
+    def __len__(self):
+        """Returns length of dataset."""
+        return len(self.data)
+
+    def __getitem__(self, idx: int) -> (np.ndarray, np.ndarray):
+        """Returns sample from dataset in format (x, y) where x is numpy.ndarray, and y is scalar or ndarray too."""
+        return np.array(self.data[idx][0]).reshape(1, 28, 28), np.array(self.data[idx][1])
+
+
+class Dataset_nums(Dataset):
+    """Base class for all numeric datasets.
     The dataset creates a Pandas DataFrame and serves as a base class for all datasets.
 
     Args:
@@ -126,3 +162,8 @@ class Dataset:
             y = y.astype(int)
             y = self.__label_encoder.inverse_transform(y)
         return y
+
+
+if __name__ == '__main__':
+    dataset = Dataset_imgs()
+    print(len(dataset))
