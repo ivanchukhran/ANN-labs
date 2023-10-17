@@ -24,6 +24,7 @@ class Dataset_imgs(Dataset):
     """Class for images of numbers dataset."""
 
     def __init__(self, name: str = "MNIST"):
+        # Load dataset
         match name:
             case "MNIST":
                 self.data = datasets.MNIST(root="datasets", train=True, download=True)
@@ -34,13 +35,23 @@ class Dataset_imgs(Dataset):
             case _:
                 raise NotImplementedError("Dataset not supported.")
 
+        # Split dataset into x and y
+        self.x = np.array(self.data.data)
+        self.y = np.array(self.data.targets)
+
+        # Transform x
+        self.x = self.x / 255.0
+
     def __len__(self):
         """Returns length of dataset."""
-        return len(self.data)
+        return len(self.x)
 
     def __getitem__(self, idx: int) -> (np.ndarray, np.ndarray):
         """Returns sample from dataset in format (x, y) where x is numpy.ndarray, and y is scalar or ndarray too."""
-        return np.array(self.data[idx][0]).reshape(1, 28, 28), np.array(self.data[idx][1])
+        x = self.x[idx]
+        y = np.zeros(10)
+        y[self.y[idx]] = 1
+        return x, y
 
 
 class Dataset_nums(Dataset):
@@ -166,4 +177,4 @@ class Dataset_nums(Dataset):
 
 if __name__ == '__main__':
     dataset = Dataset_imgs()
-    print(len(dataset))
+    print(dataset[0])
