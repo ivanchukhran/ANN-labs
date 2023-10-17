@@ -15,6 +15,7 @@ def to_tensor(other):
 
 
 def make_tensor_from_ops(*tensors, ops: Callable, backward_fn: Callable = None):
+    tensors = list([*tensors])
     t = Tensor(ops(*[t.data for t in tensors]))
     t.requires_grad = reduce(lambda x, y: x or y, [t.requires_grad for t in tensors])
     t.grad_fn = backward_fn if t.requires_grad else None
@@ -108,7 +109,7 @@ class Function:
 
     def __init__(self, saved_tensors: Any):
         self.saved_tensors = saved_tensors
-        self.next_functions = [t.grad_fn for t in saved_tensors if saved_tensors is not None]
+        # self.next_functions = [t.grad_fn for t in saved_tensors if saved_tensors is not None]
 
     def forward(self, *args, **kwargs):
         raise NotImplementedError("Forward not implemented. "
@@ -167,7 +168,7 @@ class Sum(Function):
 
 
 def sum_(x: Tensor):
-    return Sum((x,))()
+    return Sum(x)()
 
 
 class MatMul(Function):
@@ -229,7 +230,7 @@ class ReLU(Function):
 
 
 def relu_(x: Tensor):
-    return ReLU((x,))()
+    return ReLU(x)()
 
 
 class Sigmoid(Function):
@@ -249,7 +250,7 @@ class Sigmoid(Function):
 
 
 def sigmoid_(x: Tensor):
-    return Sigmoid((x,))()
+    return Sigmoid(x)()
 
 
 class Tanh(Function):
@@ -269,7 +270,7 @@ class Tanh(Function):
 
 
 def tanh_(x: Tensor):
-    return Tanh((x,))()
+    return Tanh(x)()
 
 
 class Softmax(Function):
@@ -289,7 +290,7 @@ class Softmax(Function):
 
 
 def softmax_(x: Tensor):
-    return Softmax((x,))()
+    return Softmax(x)()
 
 
 class CrossEntropy(Function):
