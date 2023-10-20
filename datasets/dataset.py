@@ -1,11 +1,14 @@
-from typing import List
-
-import pandas as pd
 import os
 from pathlib import Path
+from typing import List
+
 import numpy as np
+import pandas as pd
+from torchvision import datasets, transforms
+
 from sklearn.preprocessing import LabelEncoder
-import torchvision.datasets as datasets
+
+from tensor import Tensor
 
 
 class Dataset:
@@ -48,10 +51,10 @@ class Dataset_imgs(Dataset):
 
     def __getitem__(self, idx: int) -> (np.ndarray, np.ndarray):
         """Returns sample from dataset in format (x, y) where x is numpy.ndarray, and y is scalar or ndarray too."""
-        x = self.x[idx]
-        y = np.zeros(10)
+        x = self.x[idx].reshape(1, -1)
+        y = np.zeros((10, 1))
         y[self.y[idx]] = 1
-        return x, y
+        return Tensor(x), Tensor(y)
 
 
 class Dataset_nums(Dataset):
@@ -177,4 +180,6 @@ class Dataset_nums(Dataset):
 
 if __name__ == '__main__':
     dataset = Dataset_imgs()
-    print(dataset[0])
+    x, y = dataset[0]
+    print(x.shape)
+    print(y.shape)
