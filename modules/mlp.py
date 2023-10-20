@@ -11,10 +11,8 @@ class MLP(Module):
         super().__init__()
         for i, (in_features, out_features) in enumerate(features):
             self.__setattr__(f'linear_{i}', Linear(in_features, out_features))
-        try:
+        if activation_ is not None:
             self.__setattr__('activation', getattr(activations, activation_)())
-        except AttributeError:
-            self.__setattr__('activation', None)
 
     def forward(self, x):
         for module in self.modules():

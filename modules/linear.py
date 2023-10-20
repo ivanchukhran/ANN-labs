@@ -16,9 +16,9 @@ class Linear(Module):
             self.bias = Parameter(out_features)
 
     def forward(self, x: Tensor):
-        output = self.weight @ x.T
+        output = x @ self.weight.T
         if self.use_bias:
-            output += self.bias
+            output = output + self.bias
         return output
 
     def __repr__(self):
