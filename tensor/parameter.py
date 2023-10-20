@@ -10,5 +10,3 @@ class Parameter(Tensor):
 
     def __repr__(self):
         return f"Parameter({self.data})"
-
-
