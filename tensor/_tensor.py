@@ -125,6 +125,12 @@ class Tensor:
     def shape(self):
         return self.data.shape
 
+    def detach(self):
+        return Tensor(self.data, requires_grad=False)
+
+    def clear_grad(self):
+        self.grad = np.zeros_like(self.data)
+
     def get_state(self) -> dict:
         return {
             self.__class__.__name__: {
@@ -368,15 +374,18 @@ class Sigmoid(Function):
 
     def forward(self):
         x = self.saved_tensors
-        t = make_tensor_from_ops(x, ops=lambda a: 1 / (1 + np.exp(-a)), backward_fn=self)
+        t = make_tensor_from_ops(x, ops=lambda a: np_sigmoid(a), backward_fn=self)
         return t
 
     def backward(self, grad_output: Any = None):
         x = self.saved_tensors
         if x.requires_grad:
-            x.grad = x.grad + grad_output * (x.data * (1 - x.data))
+            x.grad = x.grad + grad_output * (np_sigmoid(x.data) * (1 - np_sigmoid(x.data)))
             x.backward(x.grad) 
 
+
+def np_sigmoid(x: np.ndarray):
+    return 1 / (1 + np.exp(-x))
 
 def sigmoid_(x: Tensor):
     return Sigmoid(x)()
