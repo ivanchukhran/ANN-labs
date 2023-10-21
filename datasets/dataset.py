@@ -12,29 +12,29 @@ from tensor import Tensor
 
 
 class Dataset:
-    """Base Interface for all datasets."""
+    """Base Interface for all data."""
 
     def __len__(self):
         """Returns length of dataset."""
         raise NotImplementedError
 
-    def __getitem__(self, idx: int) -> (np.ndarray, np.ndarray):
+    def __getitem__(self, idx: int) -> (Tensor, Tensor):
         """Returns sample from dataset in format (x, y) where x is numpy.ndarray, and y is scalar or ndarray too."""
         raise NotImplementedError
 
 
-class Dataset_imgs(Dataset):
+class MNISTDataset(Dataset):
     """Class for images of numbers dataset."""
 
-    def __init__(self, name: str = "MNIST"):
+    def __init__(self, name: str = "MNIST", root_dir: str = "../data"):
         # Load dataset
         match name:
             case "MNIST":
-                self.data = datasets.MNIST(root="datasets", train=True, download=True)
+                self.data = datasets.MNIST(root=root_dir, train=True, download=True)
             case "CIFAR10":
-                self.data = datasets.CIFAR10(root="datasets", train=True, download=True)
+                self.data = datasets.CIFAR10(root=root_dir, train=True, download=True)
             case "CIFAR100":
-                self.data = datasets.CIFAR100(root="datasets", train=True, download=True)
+                self.data = datasets.CIFAR100(root=root_dir, train=True, download=True)
             case _:
                 raise NotImplementedError("Dataset not supported.")
 
@@ -57,9 +57,9 @@ class Dataset_imgs(Dataset):
         return Tensor(x), Tensor(y)
 
 
-class Dataset_nums(Dataset):
-    """Base class for all numeric datasets.
-    The dataset creates a Pandas DataFrame and serves as a base class for all datasets.
+class TabularDataset(Dataset):
+    """Base class for all numeric data.
+    The dataset creates a Pandas DataFrame and serves as a base class for all data.
 
     Args:
         root_dir (str): Root directory of the dataset.
@@ -178,8 +178,36 @@ class Dataset_nums(Dataset):
         return y
 
 
+class WineDataset(Dataset):
+    def __init__(self, dataframe: pd.DataFrame, batch_size: int = 1, leave_last: bool = False):
+        if batch_size < 1:
+            raise ValueError("Batch size must be greater than 0.")
+        self.batch_size = batch_size
+        self.leave_last = leave_last
+        self.leave_last = leave_last
+        self.y = dataframe['quality'].values
+        self.x = dataframe.drop('quality', axis=1).values
+
+    def __len__(self):
+        return len(self.x)
+
+    def __getitem__(self, idx: int) -> (Tensor, Tensor):
+        if idx >= len(self) or idx < 0:
+            raise IndexError("Index out of range.")
+        start_index = idx * self.batch_size
+        end_index = min((idx + 1) * self.batch_size, len(self))
+        x = self.x[start_index:end_index]
+        y = self.y[start_index:end_index]
+        return Tensor(x), Tensor(y)
+
+
+
 if __name__ == '__main__':
-    dataset = Dataset_imgs()
+    print(os.listdir("../data"))
+    df = pd.read_csv("../data/wine/winequality-red.csv")
+    print("Loaded dataset:")
+    print(df.head())
+    dataset = WineDataset(df)
     x, y = dataset[0]
     print(x.shape)
     print(y.shape)
