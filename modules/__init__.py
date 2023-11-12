@@ -1,4 +1,4 @@
 from .module import Module
 from .linear import Linear
-
-__all__ = ['Module', 'Linear']
+from .nets import WiNET
+from .mlp import MLP

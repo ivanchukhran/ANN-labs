@@ -24,3 +24,30 @@ class Adam(Optimizer):
             m_hat = self.m[i] / (1 - self.beta1 ** self.t)
             v_hat = self.v[i] / (1 - self.beta2 ** self.t)
             param.data = param.data - self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
+
+    def get_state(self):
+        state = {
+            self.__class__.__name__: {
+                'lr': self.lr,
+                'beta1': self.beta1,
+                'beta2': self.beta2,
+                'eps': self.eps,
+                't': self.t,
+            }
+        }
+        return state
+
+    def set_state(self, config):
+        self.lr = config[self.__class__.__name__]['lr']
+        self.beta1 = config[self.__class__.__name__]['beta1']
+        self.beta2 = config[self.__class__.__name__]['beta2']
+        self.eps = config[self.__class__.__name__]['eps']
+        self.t = config[self.__class__.__name__]['t']
+
+    def save_state(self, file: str):
+        np.save(file=file, arr=self.get_state(), allow_pickle=True)
+
+    def load_state(self, file: str):
+        config = np.load(file, allow_pickle=True).item()
+        self.set_state(config)
+

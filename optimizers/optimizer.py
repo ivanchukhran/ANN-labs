@@ -18,7 +18,10 @@ class Optimizer:
         for param in self.model.parameters():
             param.grad = 0.0
 
-    def save_state(self):
+    def get_state(self):
+        raise NotImplementedError("You should implement this method in subclass.")
+
+    def save_state(self, path: str, *args, **kwargs):
         raise NotImplementedError("You should implement this method in subclass.")
 
     def load_state(self):

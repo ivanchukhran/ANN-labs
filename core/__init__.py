@@ -1,3 +1,3 @@
 from .epochs import train_epoch, validation_epoch
+from .train import train
 
-__all__ = ["train_epoch", "validation_epoch"]

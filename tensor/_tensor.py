@@ -54,6 +54,9 @@ class Tensor:
     def __repr__(self):
         return f"Tensor({self.data}, requires_grad={self.requires_grad})"
 
+    def __format__(self, format_spec):
+        return f"<{self.data.__format__(format_spec)}>"
+
     def __add__(self, other):
         other = to_tensor(other)
         return add_(self, other)
@@ -117,6 +120,9 @@ class Tensor:
 
     def sum(self):
         return sum_(self)
+
+    def abs(self):
+        return abs_(self)
 
     def argmax(self, axis=None):
         return Tensor(np.argmax(self.data, axis=axis), self.requires_grad, self.grad_fn)
@@ -183,6 +189,24 @@ class Function:
     def __repr__(self):
         return f"<{self.__class__.__name__}>"
 
+
+class Abs(Function):
+    def __init__(self, saved_tensors: Any):
+        super().__init__(saved_tensors)
+
+    def forward(self):
+        x = self.saved_tensors
+        t = make_tensor_from_ops(x, ops=lambda a: np.abs(a), backward_fn=self)
+        return t
+
+    def backward(self, grad_output: Any = None):
+        x = self.saved_tensors
+        if x.requires_grad:
+            x.grad = x.grad + grad_output * (x.data > 0)
+            x.backward(x.grad)
+
+def abs_(x: Tensor):
+    return Abs(x)()
 
 class Add(Function):
 
@@ -479,7 +503,7 @@ class MSE(Function):
 
     def forward(self):
         x, y = self.saved_tensors[0], self.saved_tensors[1]
-        t = make_tensor_from_ops(x, y, ops=lambda a, b: np.sum((a - b) ** 2) / a.shape[0], backward_fn=self)
+        t = make_tensor_from_ops(x, y, ops=lambda a, b: np.sum((a - b) ** 2) / len(a), backward_fn=self)
         return t
 
     def backward(self, grad_output: Any = None):

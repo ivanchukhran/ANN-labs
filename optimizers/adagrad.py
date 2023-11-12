@@ -17,3 +17,25 @@ class Adagrad(Optimizer):
         for i, (param, grad) in enumerate(zip(self.model.parameters(), self.model.grads())):
             self.v[i] += grad ** 2
             param.data = param.data - self.lr * grad / (np.sqrt(self.v[i]) + self.eps)
+
+    def get_state(self):
+        state = {
+            self.__class__.__name__: {
+                'lr': self.lr,
+                'eps': self.eps,
+                't': self.t,
+            }
+        }
+        return state
+
+    def set_state(self, config):
+        self.lr = config[self.__class__.__name__]['lr']
+        self.eps = config[self.__class__.__name__]['eps']
+        self.t = config[self.__class__.__name__]['t']
+
+    def save_state(self, file: str):
+        np.save(file=file, arr=self.get_state(), allow_pickle=True)
+
+    def load_state(self, file: str):
+        config = np.load(file, allow_pickle=True).item()
+        self.set_state(config)

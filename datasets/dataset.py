@@ -179,14 +179,14 @@ class TabularDataset(Dataset):
 
 
 class WineDataset(Dataset):
-    def __init__(self, dataframe: pd.DataFrame, batch_size: int = 1, leave_last: bool = False):
+    def __init__(self, dataframes: tuple[pd.DataFrame, pd.DataFrame], batch_size: int = 1, leave_last: bool = False):
         if batch_size < 1:
             raise ValueError("Batch size must be greater than 0.")
         self.batch_size = batch_size
         self.leave_last = leave_last
         self.leave_last = leave_last
-        self.y = dataframe['quality'].values
-        self.x = dataframe.drop('quality', axis=1).values
+        self.x = dataframes[0]
+        self.y = dataframes[1]
 
     def __len__(self):
         return len(self.x)
