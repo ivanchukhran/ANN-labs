@@ -67,7 +67,7 @@ def train(model: Module,
         stats["losses"]["train"].append(train_avg_loss)
         stats["accuracies"]["train"].append(train_avg_accuracy)
 
-        if epoch % save_state_frequency == 0 and epoch >= min_save_epoch:
+        if save_state_frequency and epoch % save_state_frequency == 0 and epoch >= min_save_epoch:
             model.save_state(join(weights_dir, f"{model.__class__.__name__}_{epoch}.npy"))
             optimizer.save_state(join(weights_dir, f"{optimizer.__class__.__name__}_{epoch}.npy"))
             np.save(file=join(weights_dir, f"stats.json"), arr=stats, allow_pickle=True)
